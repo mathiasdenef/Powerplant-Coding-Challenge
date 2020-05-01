@@ -1,0 +1,20 @@
+<button pButton type="button" style="margin-right: 15px" (click)="onClickButton()" label="Send POST Request"></button>
+<button pButton type="button" style="margin-right: 15px" (click)="onClickLoad(1)" label="Load Scenario 1"></button>
+<button pButton type="button" style="margin-right: 15px" (click)="onClickLoad(2)" label="Load Scenario 2"></button>
+<button pButton type="button" (click)="onClickLoad(3)" label="Load Scenario 3"></button>
+
+<div class="p-grid">
+  <div class="p-col">
+    <h2>Request</h2>
+    <json-editor #jsonEditorRequest [options]="editorOptionsRequest" [data]="requestData"></json-editor>
+  </div>
+  <div class="p-col">
+    <h2>Response</h2>
+    <json-editor #jsonEditorResponse [options]="editorOptionsResponse" [data]="responseData"></json-editor>
+  </div>
+  <div class="p-col">
+    <h2>SignalR (websockets)</h2>
+    <json-editor #jsonEditorSignalR [options]="editorOptionsResponse" [data]="responseSignalR"></json-editor>
+  </div>
+  <!--<div class="p-col"><ngx-json-viewer [json]="testJsonObjet"></ngx-json-viewer></div>-->
+</div>

@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.SpaServices.AngularCli;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Powerplant_Coding_Challenge.Hubs;
+using System;
 using System.Text.Json.Serialization;
 
 namespace Powerplant_Coding_Challenge
@@ -36,6 +38,8 @@ namespace Powerplant_Coding_Challenge
                 configuration.RootPath = "ClientApp/dist";
             });
 
+            services.AddSignalR();
+
             //services.AddSingleton<IProductionPlanService, ProductionPlanService>();
             services.AddSingleton<IProductionPlanService, ProductionPlan2Service>();
         }
@@ -63,11 +67,18 @@ namespace Powerplant_Coding_Challenge
 
             app.UseRouting();
 
+            app.UseWebSockets(new WebSocketOptions
+            {
+                KeepAliveInterval = TimeSpan.FromSeconds(120),
+            });
+
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllerRoute(
                     name: "default",
                     pattern: "{controller}/{action=Index}/{id?}");
+
+                endpoints.MapHub<ProductionPlanHub>("/ProductionPlanHub");
             });
 
             app.UseSpa(spa =>

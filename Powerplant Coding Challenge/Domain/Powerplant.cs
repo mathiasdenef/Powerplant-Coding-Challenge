@@ -16,7 +16,6 @@ namespace Domain
         public int Pmax { get; set; }
 
         public decimal PricePerMWh { get; set; }
-        public decimal PricePmin { get; set; }
         public decimal PriceRemainingLoad { get; set; }
     }
 }

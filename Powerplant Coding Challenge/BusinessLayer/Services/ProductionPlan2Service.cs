@@ -14,7 +14,7 @@ namespace Business.Services
     {
         public ProductionPlan GetProductionPlanByPayload(Payload payload)
         {
-            CalculatePricePerMWhAndPmin(payload);
+            CalculatePricePerMWh(payload);
 
             CalculateWindturbinesPmax(payload);
 
@@ -45,20 +45,14 @@ namespace Business.Services
                 }
                 else if (remainingLoad > powerplant.Pmax)
                 {
-                    // Hier loopen over de remaining powerplants en zien me de laagste kost gaat geven
-
-                    // Order hier opnieuw de remaining powerplants op efficienty, maar nu rekening houdend met pMin (prijs)
-
                     var nextPowerplant = GetNextPowerplant(powerplants, i);
 
-                    if ((remainingLoad - powerplant.Pmax) >= nextPowerplant.Pmin || nextPowerplant == null)
+                    if (nextPowerplant == null || ((remainingLoad - powerplant.Pmax) >= nextPowerplant.Pmin))
                     {
                         productionPlan.AddPowerplantDelivery(powerplant.Name, powerplant.Pmax);
                         remainingLoad -= powerplant.Pmax;
                         continue;
                     }
-
-                    // Efficiency calculating for spreading
 
                     var notUsedPowerplants = powerplants.Where(x => !productionPlan.PowerplantDeliveries.Select(y => y.Name).Contains(x.Name)).ToList();
                     var remainingLoadToCover = remainingLoad - powerplant.Pmax;
@@ -66,18 +60,17 @@ namespace Business.Services
                     // Calculate the difference to know how much can be given to next powerplant
                     var powerplantPmaxPminDiff = powerplant.Pmax - powerplant.Pmin;
 
-
                     var nextEfficientPowerplant = GetNextMostEfficientPowerplantForRemaingLoad(powerplants.Skip(i + 1).ToList(), powerplantPmaxPminDiff, remainingLoadToCover);
 
                     var requiredLoadForNextPowerplant = nextEfficientPowerplant.Pmin - remainingLoadToCover;
 
-
-                    // Check if requiredLoadForNextPowerplant is above powerplantPmaxPminDiff, can only give away as much he can spare
+                    // Check if requiredLoadForNextPowerplant is above powerplantPmaxPminDiff, can only give away as much he can (pMax-pMin)
                     var loadPowerplant = 0;
                     if (powerplantPmaxPminDiff >= requiredLoadForNextPowerplant)
                     {
-                        loadPowerplant= powerplant.Pmax - requiredLoadForNextPowerplant;
-                    } else
+                        loadPowerplant = powerplant.Pmax - requiredLoadForNextPowerplant;
+                    }
+                    else
                     {
                         loadPowerplant = powerplantPmaxPminDiff;
                     }
@@ -123,29 +116,40 @@ namespace Business.Services
 
         private Powerplant GetNextPowerplant(List<Powerplant> powerplants, int i)
         {
-            if (i != powerplants.Count)
+            if (i != powerplants.Count - 1)
             {
                 return powerplants[i + 1];
             }
             return null;
         }
 
-        private void CalculatePricePerMWhAndPmin(Payload payload)
+        private void CalculatePricePerMWh(Payload payload)
         {
+            if (payload.Fuels == null)
+            {
+                throw new Exception("Fuels cannot be null");
+            }
+
+            var co2PricePerMWh = (payload.Fuels.CO2PerTon / 100) * 30;
+
             foreach (var powerplant in payload.Powerplants)
             {
-                // Fetch by propertyname using reflection
                 var fuelPrice = payload.GetFuelPriceByPowerplantType(powerplant.Type);
 
-                if (powerplant.Type == PowerplantType.Gasfired || powerplant.Type == PowerplantType.Turbojet)
+                switch (powerplant.Type)
                 {
-                    powerplant.PricePerMWh = (1 / powerplant.Efficiency) * fuelPrice;
-                    powerplant.PricePmin = (1 / powerplant.Efficiency) * fuelPrice * powerplant.Pmin;
-                }
-                else
-                {
-                    // Wind has no cost
-                    powerplant.PricePerMWh = 0;
+                    case PowerplantType.Gasfired:
+                        powerplant.PricePerMWh = ((1 / powerplant.Efficiency) * fuelPrice) + co2PricePerMWh;
+                        break;
+                    case PowerplantType.Turbojet:
+                        powerplant.PricePerMWh = (1 / powerplant.Efficiency) * fuelPrice;
+                        break;
+                    case PowerplantType.Windturbine:
+                        // Wind has no cost
+                        powerplant.PricePerMWh = 0;
+                        break;
+                    default:
+                        break;
                 }
             }
         }
