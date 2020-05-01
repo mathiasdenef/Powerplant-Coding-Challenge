@@ -20,12 +20,12 @@ namespace Business.Services
             CalculateWindPmax(payload);
 
             // Order by priceOneMWh
-            var orderedPowerplants = payload.Powerplants.OrderBy(x => x.PriceOneMWh).ToList();
+            var orderedPowerplants = payload.Powerplants.OrderBy(x => x.PricePerMWh).ToList();
 
             // Create ProductionPlanObject
             var productionPlan = new ProductionPlan
             {
-                PowerplantNameAndPowers = new Collection<PowerplantNameAndPower>()
+                PowerplantDeliveries = new Collection<PowerplantDelivery>()
             };
 
             // Fill ProductionPlanObject based on pMin and pMax
@@ -181,12 +181,12 @@ namespace Business.Services
 
                 if (powerplant.Type == PowerplantType.Gasfired || powerplant.Type == PowerplantType.Turbojet)
                 {
-                    powerplant.PriceOneMWh = fuelPrice / powerplant.Efficiency;
+                    powerplant.PricePerMWh = fuelPrice / powerplant.Efficiency;
                 }
                 else
                 {
                     // Wind has no cost
-                    powerplant.PriceOneMWh = 0;
+                    powerplant.PricePerMWh = 0;
                 }
             }
         }
@@ -205,7 +205,7 @@ namespace Business.Services
 
         private void AddToProductionPlan(ProductionPlan productionPlan, string name, int p)
         {
-            productionPlan.PowerplantNameAndPowers.Add(new PowerplantNameAndPower()
+            productionPlan.PowerplantDeliveries.Add(new PowerplantDelivery()
             {
                 Name = name,
                 P = p
@@ -217,11 +217,11 @@ namespace Business.Services
             switch (type)
             {
                 case PowerplantType.Gasfired:
-                    return fuels.Gas;
+                    return fuels.GasPricePerMWh;
                 case PowerplantType.Turbojet:
-                    return fuels.Kerosine;
+                    return fuels.KerosinePricePerMWh;
                 case PowerplantType.Windturbine:
-                    return fuels.Wind;
+                    return fuels.WindPercentage;
                 default:
                     throw new Exception("No correct PowerplantType used.");
             }

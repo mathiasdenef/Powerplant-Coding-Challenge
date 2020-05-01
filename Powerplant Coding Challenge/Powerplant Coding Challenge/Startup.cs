@@ -36,7 +36,8 @@ namespace Powerplant_Coding_Challenge
                 configuration.RootPath = "ClientApp/dist";
             });
 
-            services.AddSingleton<IProductionPlanService, ProductionPlanService>();
+            //services.AddSingleton<IProductionPlanService, ProductionPlanService>();
+            services.AddSingleton<IProductionPlanService, ProductionPlan2Service>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

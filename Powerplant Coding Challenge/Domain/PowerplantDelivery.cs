@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Domain
 {
-    public class PowerplantNameAndPower
+    public class PowerplantDelivery
     {
         public string Name { get; set; }
         public int P { get; set; }

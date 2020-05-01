@@ -8,12 +8,12 @@ namespace Domain
     public class Fuels
     {
         [JsonPropertyName("gas(euro/MWh)")]
-        public decimal Gas { get; set; }
+        public decimal GasPricePerMWh { get; set; }
         [JsonPropertyName("kerosine(euro/MWh)")]
-        public decimal Kerosine { get; set; }
+        public decimal KerosinePricePerMWh { get; set; }
         [JsonPropertyName("co2(euro/ton)")]
-        public decimal CO2 { get; set; }
+        public decimal CO2PerTon { get; set; }
         [JsonPropertyName("wind(%)")]
-        public decimal Wind { get; set; }
+        public int WindPercentage { get; set; }
     }
 }
