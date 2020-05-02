@@ -41,7 +41,7 @@ namespace Powerplant_Coding_Challenge
             services.AddSignalR();
 
             //services.AddSingleton<IProductionPlanService, ProductionPlanService>();
-            services.AddSingleton<IProductionPlanService, ProductionPlan2Service>();
+            services.AddSingleton<IProductionPlanService, ProductionPlan3Service>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

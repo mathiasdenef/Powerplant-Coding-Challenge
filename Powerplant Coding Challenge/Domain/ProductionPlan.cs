@@ -14,7 +14,7 @@ namespace Domain
             PowerplantDeliveries = new Collection<PowerplantDelivery>();
         }
 
-        public ICollection<PowerplantDelivery> PowerplantDeliveries { get; set; }
+        public IList<PowerplantDelivery> PowerplantDeliveries { get; set; }
 
         public void AddPowerplantDelivery(string name, int p)
         {

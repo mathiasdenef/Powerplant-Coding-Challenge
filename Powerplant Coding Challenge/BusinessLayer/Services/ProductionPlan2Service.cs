@@ -62,7 +62,14 @@ namespace Business.Services
 
                     var nextEfficientPowerplant = GetNextMostEfficientPowerplantForRemaingLoad(powerplants.Skip(i + 1).ToList(), powerplantPmaxPminDiff, remainingLoadToCover);
 
-                    var requiredLoadForNextPowerplant = nextEfficientPowerplant.Pmin - remainingLoadToCover;
+                    // If there is a nextEfficientPowerplant, move it in list so it will be pickedup next and gets correctly assigned power
+                    if (nextEfficientPowerplant != null)
+                    {
+                        powerplants.RemoveAt(powerplants.FindIndex(x => x.Name == nextEfficientPowerplant.Name));
+                        powerplants.Insert(i + 1, nextEfficientPowerplant);
+                    }
+
+                    var requiredLoadForNextPowerplant = (nextEfficientPowerplant.Pmin - remainingLoadToCover) >= 0 ? nextEfficientPowerplant.Pmin - remainingLoadToCover : 0;
 
                     // Check if requiredLoadForNextPowerplant is above powerplantPmaxPminDiff, can only give away as much he can (pMax-pMin)
                     var loadPowerplant = 0;
