@@ -7,6 +7,6 @@ namespace Business.Interfaces
 {
     public interface IProductionPlanService
     {
-        ProductionPlan GetProductionPlanByPayload(Payload payload);
+        ProductionPlan GetProductionPlanForPayload(Payload payload);
     }
 }
