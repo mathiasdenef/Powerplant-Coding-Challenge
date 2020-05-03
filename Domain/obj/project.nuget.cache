@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "/JW3UUgeOoIJUKzzJ3VMw0Pye7Avo5QmpIW/qzJ+OCamh9u2/O32eaS/2QemkFI78ucjZ2mO8qtfSC/TML3qWg==",
+  "success": true,
+  "projectFilePath": "C:\\Users\\mathi\\Documents\\Git Repos\\Powerplant-Coding-Challenge\\Domain\\Domain.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\mathi\\.nuget\\packages\\newtonsoft.json\\12.0.3\\newtonsoft.json.12.0.3.nupkg.sha512"
+  ],
+  "logs": []
+}
