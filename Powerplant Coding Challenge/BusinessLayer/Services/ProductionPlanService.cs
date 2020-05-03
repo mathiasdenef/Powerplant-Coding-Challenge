@@ -12,9 +12,14 @@ namespace Business.Services
 {
     public class ProductionPlanService : IProductionPlanService
     {
+        /// <summary>
+        /// Get the production for specified payload
+        /// </summary>
+        /// <param name="payload"></param>
+        /// <returns>A productionplan containing the powerplant deliveries for specified payload</returns>
         public ProductionPlan GetProductionPlanForPayload(Payload payload)
         {
-            ErrorHandling();
+            ErrorHandling(payload);
 
             var productionPlan = new ProductionPlan();
 
@@ -26,7 +31,7 @@ namespace Business.Services
 
             AddPowerplantsToProductionPlan(productionPlan, payload, requiredPowerplants);
 
-            DivideLoadEfficientAcrossRequiredPowerplants(productionPlan, requiredPowerplants, payload.Load);
+            DivideLoadEfficientBetweenRequiredPowerplants(productionPlan, requiredPowerplants, payload.Load);
 
             // Order by power descending
             productionPlan.PowerplantDeliveries = productionPlan.PowerplantDeliveries.OrderByDescending(x => x.P).ToList();
@@ -34,6 +39,11 @@ namespace Business.Services
             return productionPlan;
         }
 
+        /// <summary>
+        /// Get the required powerplants for specified payload
+        /// </summary>
+        /// <param name="payload"></param>
+        /// <returns>A list of powerplants that are required for provided payload</returns>
         private List<Powerplant> GetRequiredPowerplantsForPayload(Payload payload)
         {
             // Order all powerplants by PricePerMWh
@@ -45,7 +55,7 @@ namespace Business.Services
             // List used for return value
             var requiredPowerplants = new List<Powerplant>();
 
-            // Keep looping untill all powerplants have been used
+            // Keep looping untill all powerplants have been checked
             while (powerplants.Count != 0)
             {
                 var powerplant = powerplants.First();
@@ -54,22 +64,22 @@ namespace Business.Services
                 {
                     powerplants.Remove(powerplant);
                 }
-                // If powerplant can NOT cover remaining load, because Pmin is too high
+                // If remaining load can NOT be covered by powerplant (Pmin), find the most efficient powerplant that can
                 else if (remainingLoad < powerplant.Pmin)
                 {
-                    var mostEfficientPowerplant = GetMostEfficientRemainingPowerplantForRemainingLoad(remainingLoad, powerplants, requiredPowerplants);
+                    var mostEfficientPowerplant = GetMostEfficientPowerplantForRemainingLoad(remainingLoad, powerplants, requiredPowerplants);
                     requiredPowerplants.Add(mostEfficientPowerplant);
                     remainingLoad -= mostEfficientPowerplant.Pmax;
                     powerplants.Remove(mostEfficientPowerplant);
                 }
-                // If powerplant can NOT cover remaining load, because Pmax is too low
+                // If remaining load can NOT be covered by powerplant, because Pmax is too low
                 else if (remainingLoad > powerplant.Pmax)
                 {
                     requiredPowerplants.Add(powerplant);
                     remainingLoad -= powerplant.Pmax;
                     powerplants.Remove(powerplant);
                 }
-                // If powerplant can cover remaining load 
+                // If remaining load is covered by powerplant
                 else if (remainingLoad <= powerplant.Pmax)
                 {
                     requiredPowerplants.Add(powerplant);
@@ -80,6 +90,12 @@ namespace Business.Services
             return requiredPowerplants;
         }
 
+        /// <summary>
+        /// Add to the provided productionplan the provided powerplants 
+        /// </summary>
+        /// <param name="productionPlan"></param>
+        /// <param name="payload"></param>
+        /// <param name="requiredPowerplants"></param>
         private void AddPowerplantsToProductionPlan(ProductionPlan productionPlan, Payload payload, List<Powerplant> requiredPowerplants)
         {
             // First we add the require
@@ -100,7 +116,13 @@ namespace Business.Services
             }
         }
 
-        private void DivideLoadEfficientAcrossRequiredPowerplants(ProductionPlan productionPlan, List<Powerplant> startedPowerplants, int load)
+        /// <summary>
+        /// Divide the provided load efficiently between the provided required powerplants
+        /// </summary>
+        /// <param name="productionPlan"></param>
+        /// <param name="requiredPowerplants"></param>
+        /// <param name="load"></param>
+        private void DivideLoadEfficientBetweenRequiredPowerplants(ProductionPlan productionPlan, List<Powerplant> requiredPowerplants, int load)
         {
             var powerplantDeliveries = productionPlan.PowerplantDeliveries.ToList();
 
@@ -109,9 +131,9 @@ namespace Business.Services
             // If remaining load is 0 or negative, no spreading is necessary
             if (remainingLoad <= 0) return;
 
-            for (var i = 0; i < startedPowerplants.Count; i++)
+            for (var i = 0; i < requiredPowerplants.Count; i++)
             {
-                var powerplant = startedPowerplants[i];
+                var powerplant = requiredPowerplants[i];
                 if (remainingLoad > powerplant.Pmax - powerplant.Pmin)
                 {
                     powerplantDeliveries.Find(x => x.Name == powerplant.Name).P = powerplant.Pmax;
@@ -125,24 +147,25 @@ namespace Business.Services
             }
         }
 
-        private Powerplant GetMostEfficientRemainingPowerplantForRemainingLoad(int remainingLoad, List<Powerplant> notStartedPowerplants, List<Powerplant> startedPowerplants)
+        /// <summary>
+        /// Get the most efficient powerplant for the provided remaining load
+        /// </summary>
+        /// <param name="remainingLoad"></param>
+        /// <param name="powerplants"></param>
+        /// <param name="usedPowerplants"></param>
+        private Powerplant GetMostEfficientPowerplantForRemainingLoad(int remainingLoad, List<Powerplant> powerplants, List<Powerplant> usedPowerplants)
         {
-            // If Pmin > 0 check if used powerplants can be lowered and what it would cost and where it would be taken from
-            // Compare the prices and take the cheapest option
-            // Add the cheapest option with p = Pmin
-
-            // Move the cheapest option to the index of current loop, so current powerplant will be added in next loop
-
-            Powerplant mostEfficientPowerplant = notStartedPowerplants[0]; // By default the next in line is cheapestOption, necessary for comparison
-            for (var i = 0; i < notStartedPowerplants.Count; i++)
+            // For every powerplant we calculate the price it would cost them to cover the remaining load
+            // Keeping in mind that if Pmin > remainingLoad, used powerplants can lower their power for cost efficiency
+            for (var i = 0; i < powerplants.Count; i++)
             {
-                var powerplant = notStartedPowerplants[i];
+                var powerplant = powerplants[i];
                 // If Pmin = 0, calculating price for remaining load is easy
                 if (powerplant.Pmin == 0)
                 {
                     powerplant.PriceRemainingLoad = remainingLoad * powerplant.PricePerMWh;
                 }
-                // If Pmin > 0 check if used powerplants can be lowered and what it would cost and where it would be taken from 
+                // If Pmin > 0 check if used powerplants can lower power and what the cost would be
                 else
                 {
                     var missingLoad = GetMissingLoad(powerplant, remainingLoad);
@@ -151,40 +174,55 @@ namespace Business.Services
                     {
                         powerplant.PriceRemainingLoad = remainingLoad * powerplant.PricePerMWh;
                     }
-                    // If there is missing load calc the cost for Pmin - costs you are saving from where you take power
+                    // If there is missing load, calculate the cost for Pmin and subtract the costs it can use from used powerplants
                     else
                     {
-                        var pricePmin = powerplant.Pmin * powerplant.PricePerMWh;
-                        var startedPowerplantsOrderDescByPricePerMWh = startedPowerplants.OrderByDescending(x => x.PricePerMWh).ToList();
-                        var loadNeededFromStartedPowerplants = powerplant.Pmin - remainingLoad;
-                        var totalCostForMissingLoad = pricePmin;
-
-                        for (var j = 0; j < startedPowerplantsOrderDescByPricePerMWh.Count; j++)
-                        {
-                            var startedPowerplant = startedPowerplantsOrderDescByPricePerMWh[j];
-                            var differencePmaxPmin = startedPowerplant.Pmax - startedPowerplant.Pmin;
-                            // Can cover it
-                            if (loadNeededFromStartedPowerplants <= differencePmaxPmin)
-                            {
-                                totalCostForMissingLoad -= loadNeededFromStartedPowerplants * startedPowerplant.PricePerMWh;
-                                break; // Calculated the totalCost so don't need to loop further
-                            }
-                            else
-                            {
-                                totalCostForMissingLoad -= differencePmaxPmin * startedPowerplant.PricePerMWh;
-                                loadNeededFromStartedPowerplants -= differencePmaxPmin;
-                            }
-                        }
-                        powerplant.PriceRemainingLoad = totalCostForMissingLoad;
+                        powerplant.PriceRemainingLoad = CalculateTotalCostEfficiently(powerplant, usedPowerplants, remainingLoad);
                     }
                 }
             }
 
-            return notStartedPowerplants.OrderBy(x => x.PriceRemainingLoad).First();
+            return powerplants.OrderBy(x => x.PriceRemainingLoad).First();
+        }
+
+        /// <summary>
+        /// Calculate the total cost efficiently for the provided powerplant
+        /// </summary>
+        /// <param name="powerplant"></param>
+        /// <param name="usedPowerplants"></param>
+        /// <param name="remainingLoad"></param>
+        private decimal CalculateTotalCostEfficiently(Powerplant powerplant, List<Powerplant> usedPowerplants, int remainingLoad)
+        {
+            var pricePmin = powerplant.Pmin * powerplant.PricePerMWh;
+            var usedPowerplantsOrderDescByPricePerMWh = usedPowerplants.OrderByDescending(x => x.PricePerMWh).ToList();
+            var loadNeededFromStartedPowerplants = powerplant.Pmin - remainingLoad;
+            var totalCostForMissingLoad = pricePmin;
+
+            for (var j = 0; j < usedPowerplantsOrderDescByPricePerMWh.Count; j++)
+            {
+                var startedPowerplant = usedPowerplantsOrderDescByPricePerMWh[j];
+                var differencePmaxPmin = startedPowerplant.Pmax - startedPowerplant.Pmin;
+                // Can cover it
+                if (loadNeededFromStartedPowerplants <= differencePmaxPmin)
+                {
+                    totalCostForMissingLoad -= loadNeededFromStartedPowerplants * startedPowerplant.PricePerMWh;
+                    break; // Calculated the totalCost so don't need to loop further
+                }
+                else
+                {
+                    totalCostForMissingLoad -= differencePmaxPmin * startedPowerplant.PricePerMWh;
+                    loadNeededFromStartedPowerplants -= differencePmaxPmin;
+                }
+            }
+            return totalCostForMissingLoad;
         }
 
 
-
+        /// <summary>
+        /// Calculate the missing load for provided powerplant
+        /// </summary>
+        /// <param name="powerplant"></param>
+        /// <param name="remainingLoad"></param>
         private int GetMissingLoad(Powerplant powerplant, int remainingLoad)
         {
             int missingLoad;
@@ -201,15 +239,10 @@ namespace Business.Services
             return missingLoad;
         }
 
-        private Powerplant GetNextPowerplant(List<Powerplant> powerplants, int i)
-        {
-            if (i + 1 != powerplants.Count)
-            {
-                return powerplants[i + 1];
-            }
-            return null;
-        }
-
+        /// <summary>
+        /// Calculate the price per MWh for provided powerplants
+        /// </summary>
+        /// <param name="payload"></param>
         private void CalculatePowerplantPricePerMWh(Payload payload)
         {
             // 1MWh = 0.30 Ton CO2
@@ -238,6 +271,10 @@ namespace Business.Services
             }
         }
 
+        /// <summary>
+        /// Calculate the Pmax for the provided winturbines
+        /// </summary>
+        /// <param name="payload"></param>
         private void CalculateWindturbinesPmax(Payload payload)
         {
             var windturbinePowerplants = payload.Powerplants.Where(x => x.Type == PowerplantType.Windturbine);
@@ -251,10 +288,62 @@ namespace Business.Services
             }
         }
 
-        private void ErrorHandling()
+        /// <summary>
+        /// Error handle for the provided payload
+        /// </summary>
+        /// <param name="payload"></param>
+        private void ErrorHandling(Payload payload)
         {
+            
+            if (payload.Fuels.GasPricePerMWh < 0)
+            {
+                throw new ArgumentException("Gas price per MWh is negative");
+            }
+            if (payload.Fuels.KerosinePricePerMWh < 0)
+            {
+                throw new ArgumentException("Kerosina price per MWh is negative");
+            }
+            if (payload.Fuels.CO2PerTon < 0)
+            {
+                throw new ArgumentException("CO2 price per ton is negative");
+            }
+            if (payload.Fuels.WindPercentage < 0)
+            {
+                throw new ArgumentException("Wind percentage is negative");
+            }
+            if (payload.Powerplants.Any(x => x.Pmax == 0))
+            {
+                var powerplant = payload.Powerplants.Where(x => x.Pmax == 0).First();
+                throw new ArgumentException($"Powerplant {powerplant.Name} contains an invalid Pmax");
+            }
+            if (payload.Powerplants.Any(x => x.Pmax - x.Pmin < 0))
+            {
+                var powerplant = payload.Powerplants.Where(x => x.Pmax - x.Pmin < 0).First();
+                throw new ArgumentException($"Powerplant {powerplant.Name} contains a Pmin higher than Pmax");
+            }
 
+            if (payload.Powerplants.Any(x => x.Pmax - x.Pmin < 0))
+            {
+                var powerplant = payload.Powerplants.Where(x => x.Pmax - x.Pmin < 0).First();
+                throw new ArgumentException($"Powerplant {powerplant.Name} contains a Pmin higher than Pmax");
+            }
+            if (payload.Powerplants.Any(x => x.Efficiency <= 0))
+            {
+                var powerplant = payload.Powerplants.Where(x => x.Efficiency <= 0).First();
+                throw new ArgumentException($"Powerplant {powerplant.Name} contains an invalid efficiency");
+            }
+            if (payload.Powerplants.Any(x => string.IsNullOrEmpty(x.Name)))
+            {
+                throw new ArgumentException($"Not all powerplants have a name");
+            }
+            if (payload.Load <= 0)
+            {
+                throw new ArgumentException("Load is invalid");
+            }
+            if (payload.Load > payload.Powerplants.Sum(x => x.Pmax))
+            {
+                throw new ArgumentException("Load is bigger than the sum powerplants Pmax");
+            }
         }
-
     }
 }

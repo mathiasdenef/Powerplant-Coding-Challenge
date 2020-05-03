@@ -6,9 +6,6 @@ import { RouterModule } from '@angular/router';
 
 import { AppComponent } from './app.component';
 import { NavMenuComponent } from './nav-menu/nav-menu.component';
-import { HomeComponent } from './home/home.component';
-import { CounterComponent } from './counter/counter.component';
-import { FetchDataComponent } from './fetch-data/fetch-data.component';
 import { ProductionPlanComponent } from './production-plan/production-plan.component';
 import { NgJsonEditorModule } from 'ang-jsoneditor' 
 import { ButtonModule } from 'primeng/button';
@@ -17,9 +14,6 @@ import { ButtonModule } from 'primeng/button';
   declarations: [
     AppComponent,
     NavMenuComponent,
-    HomeComponent,
-    CounterComponent,
-    FetchDataComponent,
     ProductionPlanComponent,
   ],
   imports: [
@@ -30,9 +24,6 @@ import { ButtonModule } from 'primeng/button';
     ButtonModule,
     RouterModule.forRoot([
       { path: '', component: ProductionPlanComponent, pathMatch: 'full' },
-      //{ path: 'counter', component: CounterComponent },
-      //{ path: 'fetch-data', component: FetchDataComponent },
-      //{ path: 'test', component: ProductionPlanComponent },
     ])
   ],
   providers: [],

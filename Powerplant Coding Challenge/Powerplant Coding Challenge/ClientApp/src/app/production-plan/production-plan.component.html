@@ -1,7 +1,10 @@
-<button pButton type="button" style="margin-right: 15px" (click)="onClickButton()" label="Send POST Request"></button>
-<button pButton type="button" style="margin-right: 15px" (click)="onClickLoad(1)" label="Load Scenario 1"></button>
-<button pButton type="button" style="margin-right: 15px" (click)="onClickLoad(2)" label="Load Scenario 2"></button>
-<button pButton type="button" (click)="onClickLoad(3)" label="Load Scenario 3"></button>
+<div *ngIf="errorMessage" class="alert alert-danger" role="alert">
+  {{errorMessage}}
+</div>
+<button type="button" class="btn btn-primary" style="margin-right: 15px" (click)="onClickButton()">Send POST Request</button>
+<button type="button" class="btn btn-primary" style="margin-right: 15px" (click)="onClickLoad(1)">Load Scenario 1</button>
+<button type="button" class="btn btn-primary" style="margin-right: 15px" (click)="onClickLoad(2)">Load Scenario 1</button>
+<button type="button" class="btn btn-primary" (click)="onClickLoad(3)">Load Scenario 1</button>
 
 <div class="p-grid">
   <div class="p-col">

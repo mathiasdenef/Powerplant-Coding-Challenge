@@ -14,24 +14,30 @@ namespace Powerplant_Coding_Challenge.Controllers
 {
     [Route("[controller]")]
     [ApiController]
-    public class PayloadController : ControllerBase
+    public class ProductionPlanController : ControllerBase
     {
         private readonly IProductionPlanService _productionPlanService;
         private readonly IHubContext<ProductionPlanHub> _productionPlanHub;
 
-        public PayloadController(IProductionPlanService productionPlanService, IHubContext<ProductionPlanHub> productionPlanHub)
+        public ProductionPlanController(IProductionPlanService productionPlanService, IHubContext<ProductionPlanHub> productionPlanHub)
         {
             _productionPlanService = productionPlanService;
             _productionPlanHub = productionPlanHub;
         }
 
-        // POST: api/Payload
         [HttpPost]
-        public ProductionPlan GetProductionPlanByPayload([FromBody] Payload payload)
+        public ActionResult<ProductionPlan> GetProductionPlanByPayload([FromBody] Payload payload)
         {
-            var productionPlan = _productionPlanService.GetProductionPlanForPayload(payload);
-            _productionPlanHub.Clients.All.SendAsync("ReceiveProductionPlan", productionPlan);
-            return productionPlan;
+            try
+            {
+                var productionPlan = _productionPlanService.GetProductionPlanForPayload(payload);
+                _productionPlanHub.Clients.All.SendAsync("ReceiveProductionPlan", productionPlan);
+                return productionPlan;
+            }
+            catch (Exception e)
+            {
+                throw e;
+            }
         }
     }
 }

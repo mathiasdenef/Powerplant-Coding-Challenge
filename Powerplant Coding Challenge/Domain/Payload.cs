@@ -22,7 +22,7 @@ namespace Domain
                 case PowerplantType.Windturbine:
                     return Fuels.WindPercentage;
                 default:
-                    throw new Exception("No correct PowerplantType used.");
+                    throw new Exception("Powerplant type does not exist");
             }
         }
     }

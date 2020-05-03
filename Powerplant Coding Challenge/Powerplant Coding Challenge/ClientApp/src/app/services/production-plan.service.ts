@@ -20,11 +20,7 @@ export class ProductionPlanService {
   }
 
   getProductionPlan(payload: any): Observable<any> {
-    return this.http.post<any>('payload', payload);
-  }
-
-  sendMessage(message: any) {
-    this._hubConnection.invoke('NewMessage', message);
+    return this.http.post<any>('productionplan', payload);
   }
 
   private createConnection() {

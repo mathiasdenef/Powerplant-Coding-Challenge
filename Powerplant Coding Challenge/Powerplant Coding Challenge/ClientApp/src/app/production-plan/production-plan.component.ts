@@ -16,6 +16,7 @@ export class ProductionPlanComponent {
   responseData: any;
   responseSignalR: any;
 
+  errorMessage: string;
   subscription: Subscription;
 
   @ViewChild("jsonEditorRequest", { static: true }) editorRequest: JsonEditorComponent;
@@ -112,9 +113,13 @@ export class ProductionPlanComponent {
 
     this.productionPlanService.getProductionPlan(this.editorRequest.get()).subscribe(
       response => {
+        this.errorMessage = null;
         this.responseData = response;
         // Workaround, expandAll will be called after all change detection is triggered
         setTimeout(() => this.editorResponse.expandAll(), 0);
+      },
+      error => {
+        this.errorMessage = error.error ? error.error : error.message;
       }
     );
   }
