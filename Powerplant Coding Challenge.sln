@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30011.22
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Presentation", "Powerplant Coding Challenge\Presentation.csproj", "{DF491A84-2087-4E68-BDA1-E2E6B34B8DCF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Powerplant Coding Challenge", "Powerplant Coding Challenge\Powerplant Coding Challenge.csproj", "{DF491A84-2087-4E68-BDA1-E2E6B34B8DCF}"
 	ProjectSection(ProjectDependencies) = postProject
 		{85A2130B-0E67-4416-8A9E-BE8CB0B8AAFD} = {85A2130B-0E67-4416-8A9E-BE8CB0B8AAFD}
 		{3DD5DA8E-FFF9-4AD1-87A6-6DA5108B7FE1} = {3DD5DA8E-FFF9-4AD1-87A6-6DA5108B7FE1}
